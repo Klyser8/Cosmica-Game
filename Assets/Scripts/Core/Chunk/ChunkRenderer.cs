@@ -8,7 +8,7 @@ namespace Cosmica.Core.Chunk
     /// This class is responsible for rendering a chunk in the game world. It holds the data 
     /// related to the vertices, triangles, UVs, and other mesh information for the chunk.
     /// </summary>
-    public class ChunkRenderData
+    public class ChunkRenderer
     {
 
         public static readonly int ChunkWidth = 32;
@@ -30,7 +30,7 @@ namespace Cosmica.Core.Chunk
         /// </summary>
         /// <param name="chunkObject">The GameObject to which the chunk's mesh will be attached.</param>
         /// <param name="planetChunk">The PlanetChunk that holds the data for this chunk's voxels.</param>
-        public ChunkRenderData(GameObject chunkObject, PlanetChunk planetChunk)
+        public ChunkRenderer(GameObject chunkObject, PlanetChunk planetChunk)
         {
             _assetRegistry = AssetRegistry.Instance;
             _planetChunk = planetChunk;
@@ -103,19 +103,43 @@ namespace Cosmica.Core.Chunk
         }
         
         /// <summary>
-        /// This method checks if a voxel at a specific position is solid or not.
-        /// It returns true if the voxel is solid, false otherwise.
+        /// Sets the active state of the chunk.
         /// </summary>
-        private bool IsVoxelSolid (Vector3 pos) {
-
-            int x = Mathf.FloorToInt (pos.x);
-            int y = Mathf.FloorToInt (pos.y);
-            int z = Mathf.FloorToInt (pos.z);
-            
+        public bool IsActive
+        {
+            get => ChunkObject.activeSelf;
+            set => ChunkObject.SetActive(value);
+        }
+        
+        /// <summary>
+        /// This method checks if a voxel at a specific position is outside this chunk.
+        /// </summary>
+        /// <param name="x">The x position of the voxel.</param>
+        /// <param name="y">The y position of the voxel.</param>
+        /// <param name="z">The z position of the voxel.</param>
+        /// <returns>True if the voxel is outside the chunk, false otherwise.</returns>
+        private bool IsVoxelOutsideChunk(int x, int y, int z)
+        {
             bool outOfBounds = x < 0 || x >= ChunkWidth || y < 0 || y >= ChunkHeight || z < 0 || z >= ChunkWidth;
-            if (outOfBounds)
+            return outOfBounds;
+        }
+        
+        /// <summary>
+        /// This method checks if a voxel at a specific position is solid or not.
+        /// It returns true if the voxel is solid OR if the voxel is outside the chunk.
+        ///
+        /// IMPORTANT: This method is ONLY used to determine what faces of a voxel should be rendered.
+        /// </summary>
+        private bool IsVoxelSolid(Vector3 localPos) {
+
+            int x = Mathf.FloorToInt (localPos.x);
+            int y = Mathf.FloorToInt (localPos.y);
+            int z = Mathf.FloorToInt (localPos.z);
+            
+            if (IsVoxelOutsideChunk(x, y, z))
             {
                 return false;
+                // return _assetRegistry.BlockTypes[_planetChunk.ChunkVoxels[x, y, z] + ];
             }
 
             return _assetRegistry.BlockTypes[_planetChunk.ChunkVoxels[x, y, z]].IsSolid;
