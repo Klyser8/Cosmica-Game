@@ -6,34 +6,31 @@ namespace Cosmica.Core.Chunk
 {
     public class PlanetChunk
     {
-        
-        private GameObject _chunkGameObject;
+        public GameObject ChunkGameObject { get; }
+
         private ChunkRenderer _chunkRenderer;
         public ChunkPosition ChunkPosition { get; }
         public int[,,] ChunkVoxels { get; } = new int[ChunkRenderer.ChunkWidth, ChunkRenderer.ChunkHeight, ChunkRenderer.ChunkWidth];
 
-        private AssetRegistry _assetRegistry;
         private PlanetHandler _planetHandler;
         private PlanetGenerator _planetGenerator;
-        
         public PlanetChunk(PlanetHandler planetHandler, int x, int y, int z)
         {
-            _assetRegistry = AssetRegistry.Instance;
             _planetHandler = planetHandler;
-            _planetGenerator = _planetHandler.PlanetGenerator;
+            _planetGenerator = planetHandler.PlanetGenerator;
             ChunkPosition = new ChunkPosition(x, y, z);
             
             PopulateChunkVoxels();
             
-            _chunkGameObject = new GameObject();
-            _chunkGameObject.transform.position = new Vector3(
+            ChunkGameObject = new GameObject();
+            ChunkGameObject.transform.position = new Vector3(
                 ChunkPosition.X * ChunkRenderer.ChunkWidth, 
                 ChunkPosition.Y * ChunkRenderer.ChunkHeight, 
                 ChunkPosition.Z * ChunkRenderer.ChunkWidth);
-            _chunkGameObject.name = "Chunk (" + ChunkPosition.X + ", " + ChunkPosition.Y + ", " + ChunkPosition.Z + ")";
-            _chunkGameObject.transform.SetParent(_planetGenerator.ChunkHolder.transform);
+            ChunkGameObject.name = "Chunk (" + ChunkPosition.X + ", " + ChunkPosition.Y + ", " + ChunkPosition.Z + ")";
+            ChunkGameObject.transform.SetParent(_planetGenerator.ChunkHolderObject.transform);
             
-            _chunkRenderer = new ChunkRenderer(_chunkGameObject, this);
+            _chunkRenderer = new ChunkRenderer(_planetHandler, ChunkGameObject, this);
         }
 
         /// <summary>
@@ -48,7 +45,8 @@ namespace Cosmica.Core.Chunk
                 {
                     for (int z = 0; z < ChunkRenderer.ChunkWidth; z++)
                     {
-                        ChunkVoxels[x, y, z] = _planetGenerator.PickVoxel(ChunkToWorldPosition(new Vector3(x, y, z)));
+                        var worldPos = ChunkToWorldPosition(new Vector3(x, y, z));
+                        ChunkVoxels[x, y, z] = _planetGenerator.PickVoxel(worldPos);
                     }
                 }
             }

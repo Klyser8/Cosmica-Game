@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Cosmica.Core.Voxel;
+using Cosmica.Planet;
 using UnityEngine;
 
 namespace Cosmica.Core.Chunk
@@ -13,8 +14,9 @@ namespace Cosmica.Core.Chunk
 
         public static readonly int ChunkWidth = 32;
         public static readonly int ChunkHeight = 32;
-
-        public GameObject ChunkObject { get; }
+        
+        
+        private GameObject _chunkGameObject;
         private PlanetChunk _planetChunk;
         private MeshRenderer _meshRenderer;
         public MeshFilter MeshFilter { get; }
@@ -24,19 +26,22 @@ namespace Cosmica.Core.Chunk
         public List<Vector2> ChunkUVs { get; } = new();
         
         private AssetRegistry _assetRegistry;
+        private PlanetHandler _planetHandler;
 
         /// <summary>
         /// Initializes a new instance of the ChunkRenderData class.
         /// </summary>
-        /// <param name="chunkObject">The GameObject to which the chunk's mesh will be attached.</param>
+        /// <param name="planetHandler">The PlanetHandler which the chunk is part of</param>
+        /// <param name="chunkGameObject">The GameObject to which the chunk's mesh will be attached.</param>
         /// <param name="planetChunk">The PlanetChunk that holds the data for this chunk's voxels.</param>
-        public ChunkRenderer(GameObject chunkObject, PlanetChunk planetChunk)
+        public ChunkRenderer(PlanetHandler planetHandler, GameObject chunkGameObject, PlanetChunk planetChunk)
         {
             _assetRegistry = AssetRegistry.Instance;
+            _planetHandler = planetHandler;
             _planetChunk = planetChunk;
-            ChunkObject = chunkObject;
-            _meshRenderer = ChunkObject.AddComponent<MeshRenderer>();
-            MeshFilter = ChunkObject.AddComponent<MeshFilter>();
+            _chunkGameObject = chunkGameObject;
+            _meshRenderer = _chunkGameObject.AddComponent<MeshRenderer>();
+            MeshFilter = _chunkGameObject.AddComponent<MeshFilter>();
             _meshRenderer.material = _assetRegistry.GetBlockMaterial();
             CreateMeshData();
             CreateMesh();
@@ -46,7 +51,7 @@ namespace Cosmica.Core.Chunk
         /// This method creates the mesh data for each voxel in the chunk.
         /// It goes through each voxel in the chunk and adds it to the chunk's mesh data.
         /// </summary>
-        void CreateMeshData () {
+        private void CreateMeshData () {
 
             for (int y = 0; y < ChunkHeight; y++) {
                 for (int x = 0; x < ChunkWidth; x++) {
@@ -107,8 +112,8 @@ namespace Cosmica.Core.Chunk
         /// </summary>
         public bool IsActive
         {
-            get => ChunkObject.activeSelf;
-            set => ChunkObject.SetActive(value);
+            get => _chunkGameObject.activeSelf;
+            set => _chunkGameObject.SetActive(value);
         }
         
         /// <summary>
@@ -138,8 +143,8 @@ namespace Cosmica.Core.Chunk
             
             if (IsVoxelOutsideChunk(x, y, z))
             {
-                return false;
-                // return _assetRegistry.BlockTypes[_planetChunk.ChunkVoxels[x, y, z] + ];
+                // return false;
+                return _assetRegistry.BlockTypes[_planetHandler.PlanetGenerator.PickVoxel(localPos + _planetChunk.ChunkPosition.ToWorldPosition())].IsSolid;
             }
 
             return _assetRegistry.BlockTypes[_planetChunk.ChunkVoxels[x, y, z]].IsSolid;
@@ -150,7 +155,7 @@ namespace Cosmica.Core.Chunk
         /// This method adds the texture data to the UVs of the mesh data.
         /// It determines which part of the texture atlas to use for the voxel based on the texture ID.
         /// </summary>
-        void AddTexture(int textureID) {
+        private void AddTexture(int textureID) {
 
             float y = textureID / VoxelData.TextureAtlasSizeInBlocks;
             float x = textureID - (y * VoxelData.TextureAtlasSizeInBlocks);

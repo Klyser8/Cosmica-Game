@@ -13,21 +13,21 @@ namespace Cosmica.Planet
     public class PlanetGenerator : MonoBehaviour
     {
         private PlanetHandler _planetHandler;
-        public GameObject ChunkHolder { get; private set; }
-        private PlanetChunk[,,] _chunks;
-        
+        public GameObject ChunkHolderObject { get; private set; }
+        public PlanetChunk[,,] Chunks { get; private set; }
+
         private void Awake()
         {
             _planetHandler = gameObject.GetComponent<PlanetHandler>();
-            _chunks = new PlanetChunk[
+            Chunks = new PlanetChunk[
                 _planetHandler.PlanetSettings.PlanetWidthInChunks, 
                 _planetHandler.PlanetSettings.PlanetHeightInChunks, 
                 _planetHandler.PlanetSettings.PlanetWidthInChunks];
-            ChunkHolder = new GameObject
+            ChunkHolderObject = new GameObject
             {
                 name = "Chunks",
             };
-            ChunkHolder.transform.SetParent(transform);
+            ChunkHolderObject.transform.SetParent(transform);
         }
 
         private void Start()
@@ -51,7 +51,7 @@ namespace Cosmica.Planet
         
         private void GenerateChunk(int x, int y, int z)
         {
-            _chunks[x, y, z] = new PlanetChunk(_planetHandler, x, y, z);
+            Chunks[x, y, z] = new PlanetChunk(_planetHandler, x, y, z);
         }
 
         public int PickVoxel(Vector3 pos)
@@ -61,7 +61,13 @@ namespace Cosmica.Planet
                 return 0;
             }
 
-            var y = pos.y;
+            int x = (int) pos.x;
+            int y = (int) pos.y;
+            int z = (int) pos.z;
+            if (y == 4 && x == _planetHandler.PlanetSettings.GetPlanetWidthInVoxels() - 1 && z == _planetHandler.PlanetSettings.GetPlanetWidthInVoxels() - 1)
+            {
+                return 1;
+            }
             if (y == 0)
             {
                 return 1;
